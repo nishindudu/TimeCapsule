@@ -37,8 +37,9 @@ class TimeCapsule:
             if result:
                 self.content, self.open_date, self.create_date, self.max_opens, self.opened = result
                 self.id = id
-                self.conn.execute("UPDATE Capsules SET opened = opened + 1 WHERE id = ?", (str(id),))
-                self.conn.commit()
+                if not datetime.datetime.now() < datetime.datetime.strptime(self.open_date, '%Y-%m-%d'):
+                    self.conn.execute("UPDATE Capsules SET opened = opened + 1 WHERE id = ?", (str(id),))
+                    self.conn.commit()
                 if self.max_opens > 0 and self.opened >= self.max_opens:
                     self.conn.execute("DELETE FROM Capsules WHERE id = ?", (str(id),))
                     self.conn.commit()
