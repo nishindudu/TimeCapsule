@@ -56,3 +56,15 @@ async function viewTimeCapsule() {
         showToast(`${errorData.message}\nOpen Date: ${errorData.open_date}`);
     }
 }
+
+
+async function copyId() {
+    const id = document.getElementById('time_capsule_id').innerText;
+
+    try {
+        await navigator.clipboard.writeText(id);
+        showToast('ID copied to clipboard!');
+    } catch (err) {
+        showToast('Failed to copy ID. Please copy manually');
+    }
+}

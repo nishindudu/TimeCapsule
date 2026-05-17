@@ -22,8 +22,8 @@
                         Create!
                     </button>
                 </form>
-                <div id="response" class="hide">
-                    <p>Your id: <span id="time_capsule_id"></span></p>
+                <div id="response" class="">
+                    <p>Your id: <span id="time_capsule_id"></span><span id="copy-container"><img src="{{ url_for('static', filename='img/copy.svg') }}" alt="Copy" onclick="copyId()"></span></p>
                     <p>Save this id to view your time capsule later!</p>
                     <p class="warn">This id cannot be retrieved again! So make sure to save it somewhere safe.</p>
                 </div>

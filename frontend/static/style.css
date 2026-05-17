@@ -103,3 +103,10 @@ form {
 #time_capsule_content {
     text-align: left;
 }
+
+#copy-container {
+    display: inline-block;
+    margin-left: 10px;
+    cursor: pointer;
+    filter: invert();
+}
