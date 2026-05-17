@@ -90,6 +90,12 @@ def view_capsule(capsule_id):
         return jsonify({'message': 'Time capsule is not open yet!', 'open_date': capsule.open_date}), 403
     return jsonify({'content': capsule.content}), 200
 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
