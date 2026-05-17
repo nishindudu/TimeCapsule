@@ -22,6 +22,7 @@ async function saveIdToLocalStorage(id) {
 async function createTimeCapsule() {
     const content = document.getElementById('text_content').value;
     const openDate = document.getElementById('open_date').value;
+    const maxOpens = document.getElementById('max_opens').value;
 
     let response = await fetch('/create', {
         method: 'POST',
@@ -30,7 +31,8 @@ async function createTimeCapsule() {
         },
         body: JSON.stringify({
             content: content,
-            open_date: openDate
+            open_date: openDate,
+            max_opens: maxOpens
         })
     });
 
@@ -66,6 +68,10 @@ async function viewTimeCapsule() {
     }
     else {
         const errorData = await response.json();
+        if (errorData.message === 'Time capsule not found!') {
+            showToast('Time Capsule not found! Please check the ID and try again.');
+            return;
+        }
         showToast(`${errorData.message}\nOpen Date: ${errorData.open_date}`);
     }
 }
