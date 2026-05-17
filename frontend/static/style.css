@@ -19,6 +19,10 @@ nav h1 {
     text-align: center;
 }
 
+nav h1:hover {
+    cursor: pointer;
+}
+
 button {
     color: #eeeeee;
     background-color: #3333338a;
@@ -109,4 +113,35 @@ form {
     margin-left: 10px;
     cursor: pointer;
     filter: invert();
+}
+
+#my-capsules {
+    position: fixed;
+    top: 30%;
+    right: 0px;
+    background-color: #3333338a;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 300px;
+    transition-duration: 0.5s;
+    transition-behavior: ease-in-out;
+    transform: translateX(130px);
+}
+
+#my-capsules:hover {
+    /* right: -100px; */
+    transform: translateX(110px);
+    cursor: pointer;
+}
+
+#my-capsules h4 {
+    margin: 0;
+    margin-bottom: 8px;
+    padding: 0;
+}
+
+#saved-capsules {
+    padding: 0;
+    margin: 0;
+    margin-bottom: 3px;
 }

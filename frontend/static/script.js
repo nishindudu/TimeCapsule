@@ -8,6 +8,17 @@ async function showToast(message) {
     }, 3000);
 }
 
+async function saveIdToLocalStorage(id) {
+    try {
+        const existing = JSON.parse(localStorage.getItem('time_capsule_ids')) || [];
+        existing.push(id);
+        // console.log('Saving ID to localStorage:', existing);
+        localStorage.setItem('time_capsule_ids', JSON.stringify(existing));
+    } catch (err) {
+        console.error('Failed to save ID to localStorage:', err);
+    }
+}
+
 async function createTimeCapsule() {
     const content = document.getElementById('text_content').value;
     const openDate = document.getElementById('open_date').value;
@@ -25,10 +36,12 @@ async function createTimeCapsule() {
 
     if (response.ok) {
         showToast('Time Capsule created successfully!');
+        const id = (await response.json()).id;
         document.getElementById('text_content').value = '';
         document.getElementById('open_date').value = '';
-        document.getElementById('time_capsule_id').innerText = (await response.json()).id;
+        document.getElementById('time_capsule_id').innerText = id;
         document.getElementById('response').classList.remove('hide');
+        await saveIdToLocalStorage(id);
     }
     else {
         showToast('Failed to create Time Capsule. :(')
@@ -67,4 +80,34 @@ async function copyId() {
     } catch (err) {
         showToast('Failed to copy ID. Please copy manually');
     }
+}
+
+async function listSaved() {
+    const savedIds = JSON.parse(localStorage.getItem('time_capsule_ids')) || [];
+    const list = document.getElementById('saved-capsules');
+    list.innerHTML = '';
+
+    if (savedIds.length === 0) {
+        list.innerHTML = '<p>No saved time capsules found.</p>';
+        return;
+    }
+
+    savedIds.forEach(element => {
+        const item = document.createElement('li');
+        item.style.cursor = 'pointer';
+        item.onclick = () => {
+            document.getElementById('time_capsule_id_input').value = element;
+        };
+        item.textContent = element;
+        list.appendChild(item);
+    });
+}
+
+async function toggleSaved() {
+    const listContainer = document.getElementById('my-capsules');
+
+    listContainer.style.transform = 'translateX(-10px)';
+    listContainer.style.cursor = 'default';
+    listSaved();
+    return;
 }
