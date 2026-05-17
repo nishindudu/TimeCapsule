@@ -111,10 +111,12 @@ async function listSaved() {
 
 async function toggleSaved() {
     const listContainer = document.getElementById('my-capsules');
+    const clearBtn = document.getElementById('clear-saved-btn');
 
     listContainer.style.transform = 'translateX(-10px)';
     listContainer.style.cursor = 'default';
     listSaved();
+    clearBtn.classList.remove('hide');
     return;
 }
 
