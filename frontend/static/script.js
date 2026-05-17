@@ -117,3 +117,8 @@ async function toggleSaved() {
     listSaved();
     return;
 }
+
+async function clearSaved() {
+    localStorage.removeItem('time_capsule_ids');
+    listSaved();
+}

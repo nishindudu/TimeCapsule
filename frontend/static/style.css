@@ -126,6 +126,7 @@ form {
     transition-duration: 0.5s;
     transition-behavior: ease-in-out;
     transform: translateX(130px);
+    text-align: center;
 }
 
 #my-capsules:hover {
@@ -144,4 +145,10 @@ form {
     padding: 0;
     margin: 0;
     margin-bottom: 3px;
+}
+
+#clear-saved-btn {
+    align-self: center;
+    margin-bottom: 0 !important;
+    margin-top: 5px !important;
 }
