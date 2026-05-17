@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Time Capsule</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <nav>
+            <h1>TimeCapsule</h1>
+        </nav>
+        <div class="container">
+            <div id="content">
+                <button onclick="window.location.href='/create'">Create a Time Capsule</button>
+                <button onclick="window.location.href='/view'">View Time Capsules</button>
+            </div>
+        </div>
+    </body>
+</html>
