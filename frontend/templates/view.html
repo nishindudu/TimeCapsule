@@ -36,5 +36,10 @@
             </div>
             <button onclick="clearSaved()" id="clear-saved-btn" class="hide">Clear Saved Capsules</button>
         </div>
+        <div id="loading" class="hide">
+            <div id="loader">
+                <img src="{{ url_for('static', filename='img/loader.svg') }}" alt="Loading..." width="50" height="50">
+            </div>
+        </div>
     </body>
 </html>

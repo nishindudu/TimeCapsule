@@ -52,6 +52,8 @@ async function createTimeCapsule() {
 
 async function viewTimeCapsule() {
     const id = document.getElementById('time_capsule_id_input').value;
+    const loader = document.getElementById('loading');
+    loader.classList.remove('hide');
 
     let response = await fetch(`/view/${id}`, {
         method: 'GET',
@@ -62,12 +64,14 @@ async function viewTimeCapsule() {
 
     if (response.ok) {
         const data = await response.json();
+        loader.classList.add('hide');
         showToast('Time Capsule retrieved successfully!');
         document.getElementById('response').classList.remove('hide');
         document.getElementById('time_capsule_content').innerText = data.content;
     }
     else {
         const errorData = await response.json();
+        loader.classList.add('hide');
         if (errorData.message === 'Time capsule not found!') {
             showToast('Time Capsule not found! Please check the ID and try again.');
             return;
