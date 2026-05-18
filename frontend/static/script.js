@@ -78,6 +78,8 @@ async function viewTimeCapsule() {
         }
         showToast(`${errorData.message}\nOpen Date: ${errorData.open_date}`);
     }
+
+    loader.classList.add('hide');
 }
 
 
@@ -127,4 +129,19 @@ async function toggleSaved() {
 async function clearSaved() {
     localStorage.removeItem('time_capsule_ids');
     listSaved();
+}
+
+async function saveCapsule() {
+    const data = document.getElementById('time_capsule_content').innerText;
+
+    let element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(data));
+    element.setAttribute('download', 'time_capsule.txt');
+    element.style.display = 'none';
+
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    showToast('Saved Time Capsule content as time_capsule.txt');
 }
