@@ -10,6 +10,13 @@ app = Flask(__name__, template_folder='frontend/templates', static_folder='front
 database_url = os.getenv('DATABASE_URL')
 token = os.getenv('TOKEN')
 
+start_time = datetime.datetime.now()
+
+request_count = {
+    'browser': 0,
+    'curl': 0
+}
+
 class TimeCapsule:
     def __init__(self, content, open_date, max_opens):
         self.content = content
@@ -48,6 +55,14 @@ class TimeCapsule:
         except Exception as e:
             print(f"Error occurred while fetching time capsule: {e}")
             return False
+
+    def get_number_of_capsules(self):
+        try:
+            result =self.conn.execute("SELECT COUNT(*) FROM Capsules")
+            return result.fetchone()[0]
+        except Exception as e:
+            print(f"Error occurred while counting time capsules: {e}")
+            return 0
 
 @app.route('/')
 def index():
@@ -90,10 +105,28 @@ def view_capsule(capsule_id):
         return jsonify({'message': 'Time capsule is not open yet!', 'open_date': capsule.open_date}), 403
     return jsonify({'content': capsule.content}), 200
 
+@app.route('/stats')
+def stats():
+    capsule = TimeCapsule(None, None, None)
+
+    count = capsule.get_number_of_capsules()
+    uptime = datetime.datetime.now() - start_time
+    session_requests = request_count['browser'] + request_count['curl']
+
+    return jsonify({'current_count': count, 'uptime': str(uptime), 'session_requests': session_requests}), 200
+
 
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
+@app.before_request
+def count_requests():
+    user_agent = request.headers.get('User-Agent', '').lower()
+    if 'curl' in user_agent:
+        request_count['curl'] += 1
+    else:
+        request_count['browser'] += 1
 
 
 if __name__ == '__main__':
