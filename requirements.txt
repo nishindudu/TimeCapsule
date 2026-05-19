@@ -1,3 +1,4 @@
 libsql
 flask
 waitress
+cryptography

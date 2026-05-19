@@ -23,6 +23,7 @@ async function createTimeCapsule() {
     const content = document.getElementById('text_content').value;
     const openDate = document.getElementById('open_date').value;
     const maxOpens = document.getElementById('max_opens').value;
+    const password = document.getElementById('password').value || null;
 
     let response = await fetch('/create', {
         method: 'POST',
@@ -32,7 +33,8 @@ async function createTimeCapsule() {
         body: JSON.stringify({
             content: content,
             open_date: openDate,
-            max_opens: maxOpens
+            max_opens: maxOpens,
+            password: password
         })
     });
 
@@ -52,14 +54,18 @@ async function createTimeCapsule() {
 
 async function viewTimeCapsule() {
     const id = document.getElementById('time_capsule_id_input').value;
+    const password = document.getElementById('password').value || null;
     const loader = document.getElementById('loading');
     loader.classList.remove('hide');
 
     let response = await fetch(`/view/${id}`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            password: password
+        })
     })
 
     if (response.ok) {
@@ -72,11 +78,11 @@ async function viewTimeCapsule() {
     else {
         const errorData = await response.json();
         loader.classList.add('hide');
-        if (errorData.message === 'Time capsule not found!') {
-            showToast('Time Capsule not found! Please check the ID and try again.');
-            return;
+        if (errorData.open_date) {
+            showToast(`${errorData.message}\nOpen Date: ${errorData.open_date}`);
+        } else {
+            showToast(errorData.message);
         }
-        showToast(`${errorData.message}\nOpen Date: ${errorData.open_date}`);
     }
 
     loader.classList.add('hide');

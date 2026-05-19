@@ -2,7 +2,10 @@ import os
 import libsql
 import uuid
 import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+import hashlib
+import base64
+from cryptography.fernet import Fernet
+from flask import Flask, render_template, request, jsonify, redirect, url_for, abort
 
 app = Flask(__name__, template_folder='frontend/templates', static_folder='frontend/static')
 
@@ -12,16 +15,20 @@ token = os.getenv('TOKEN')
 
 start_time = datetime.datetime.now()
 
-request_count = {
-    'browser': 0,
-    'curl': 0
+global_stats = {
+    'request_count': {
+        'browser': 0,
+        'curl': 0
+    },
+    '404_count': 0
 }
 
 class TimeCapsule:
-    def __init__(self, content, open_date, max_opens):
+    def __init__(self, content, open_date, max_opens, encrypted=False):
         self.content = content
         self.open_date = open_date
         self.max_opens = max_opens
+        self.encrypted = 0 if not encrypted else 1
         self.create_date = None # Will be set
         self.id = None # Will be updated when saved to database
         self.conn = libsql.connect(database=database_url, auth_token=token)
@@ -30,7 +37,7 @@ class TimeCapsule:
         try:
             id = uuid.uuid4().hex
             now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            self.conn.execute("INSERT INTO Capsules (id, content, open_date, max_opens, create_date) VALUES (?, ?, ?, ?, ?)", (str(id), str(self.content), str(self.open_date), int(self.max_opens), str(now)))
+            self.conn.execute("INSERT INTO Capsules (id, content, open_date, max_opens, create_date, encrypted) VALUES (?, ?, ?, ?, ?, ?)", (str(id), str(self.content), str(self.open_date), int(self.max_opens), str(now), int(self.encrypted)))
             self.conn.commit()
             self.id = id
             return True
@@ -40,9 +47,9 @@ class TimeCapsule:
         
     def get_by_id(self, id):
         try:
-            result = self.conn.execute("SELECT content, open_date, create_date, max_opens, opened FROM Capsules where id = ?", (str(id),)).fetchone()
+            result = self.conn.execute("SELECT content, open_date, create_date, max_opens, opened, encrypted FROM Capsules where id = ?", (str(id),)).fetchone()
             if result:
-                self.content, self.open_date, self.create_date, self.max_opens, self.opened = result
+                self.content, self.open_date, self.create_date, self.max_opens, self.opened, self.encrypted = result
                 self.id = id
                 if not datetime.datetime.now() < datetime.datetime.strptime(self.open_date, '%Y-%m-%d'):
                     self.conn.execute("UPDATE Capsules SET opened = opened + 1 WHERE id = ?", (str(id),))
@@ -63,6 +70,21 @@ class TimeCapsule:
         except Exception as e:
             print(f"Error occurred while counting time capsules: {e}")
             return 0
+        
+    def encrypt_content(self, password):
+        key = base64.urlsafe_b64encode(hashlib.sha256(password.encode()).digest())
+        cipher = Fernet(key)
+        encrypted = cipher.encrypt(self.content.encode())
+        self.content = encrypted.decode()
+        self.encrypted = 1
+        return encrypted.decode()
+    
+    def decrypt_content(self, password):
+        key = base64.urlsafe_b64encode(hashlib.sha256(password.encode()).digest())
+        cipher = Fernet(key)
+        decrypted = cipher.decrypt(self.content.encode())
+        self.content = decrypted.decode()
+        return decrypted.decode()
 
 @app.route('/')
 def index():
@@ -74,14 +96,20 @@ def create():
         content = request.json.get('content')
         open_date = request.json.get('open_date')
         max_opens = request.json.get('max_opens', 0)
+        password = request.json.get('password', None)
+
         # print(f"Received content: {content}, open_date: {open_date}")
         # print(f"content: {content}, open: {open_date}")
+
 
         if not content or not open_date:
             print("Missing content or open date!")
             return jsonify({'message': 'Content and open date are required!'}), 400
 
         capsule = TimeCapsule(content, open_date, max_opens)
+        if password:
+            capsule.encrypt_content(password)
+
         if not capsule.save():
             return jsonify({'message': 'Failed to create time capsule!'}), 500
         capsule_id = capsule.id
@@ -94,16 +122,30 @@ def create():
 def view():
     return render_template('view.html')
 
-@app.route('/view/<capsule_id>', methods=['GET'])
+@app.route('/view/<capsule_id>', methods=['POST'])
 def view_capsule(capsule_id):
     capsule = TimeCapsule(None, None, None)
+
     if not capsule.get_by_id(capsule_id):
         return jsonify({'message': 'Time capsule not found!'}), 404
+    
     current_date = datetime.datetime.now()
     open_date = datetime.datetime.strptime(capsule.open_date, '%Y-%m-%d')
     if current_date < open_date:
         return jsonify({'message': 'Time capsule is not open yet!', 'open_date': capsule.open_date}), 403
-    return jsonify({'content': capsule.content}), 200
+    
+    if capsule.encrypted:
+        password = request.json.get('password', None)
+        if not password:
+            return jsonify({'message': 'This time capsule is password protected!'}), 403
+        
+        try:
+            capsule.decrypt_content(password)
+        except Exception as e:
+            print(f"Error occurred while decrypting content: {e}")
+            return jsonify({'message': 'Incorrect password!'}), 403
+        
+    return jsonify({'content': str(capsule.content)}), 200
 
 @app.route('/stats')
 def stats():
@@ -111,22 +153,24 @@ def stats():
 
     count = capsule.get_number_of_capsules()
     uptime = datetime.datetime.now() - start_time
-    session_requests = request_count['browser'] + request_count['curl']
+    session_requests = global_stats['request_count']['browser'] + global_stats['request_count']['curl']
+    count_404 = global_stats['404_count']
 
-    return jsonify({'current_count': count, 'uptime': str(uptime), 'session_requests': session_requests}), 200
+    return jsonify({'current_count': count, 'uptime': str(uptime), 'session_requests': session_requests, '404_count_session': count_404}), 200
 
 
 @app.errorhandler(404)
 def page_not_found(e):
+    global_stats['404_count'] += 1
     return render_template('404.html'), 404
 
 @app.before_request
 def count_requests():
     user_agent = request.headers.get('User-Agent', '').lower()
     if 'curl' in user_agent:
-        request_count['curl'] += 1
+        global_stats['request_count']['curl'] += 1
     else:
-        request_count['browser'] += 1
+        global_stats['request_count']['browser'] += 1
 
 
 if __name__ == '__main__':
