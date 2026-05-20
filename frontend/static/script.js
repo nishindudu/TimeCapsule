@@ -194,3 +194,10 @@ window.addEventListener('beforeunload', (event) => {
         event.returnValue = '';
     }
 });
+
+window.addEventListener('DOMContentLoaded', async () => {
+    const currentCountEl = document.getElementById('active-capsules-count');
+    const stats = await fetch('/stats');
+    const data = await stats.json();
+    currentCountEl.textContent = `${data.current_count}`;
+});
