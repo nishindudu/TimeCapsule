@@ -15,7 +15,8 @@
             <div id="content">
                 <form action="javascript:void(0)" method="post">
                     <label for="text_content">Content:</label>
-                    <textarea id="text_content" name="content" rows="4" cols="50" required></textarea><br>
+                    <textarea id="text_content" name="content" rows="4" cols="50" onchange="showSizeStats()" required></textarea><br>
+                    <span id="write-stats"></span><br>
                     <label for="open_date">Open Date:</label><br>
                     <input type="date" id="open_date" name="open_date" required><br>
                     <label for="max_opens">Maximum Opens (0 for unlimited):</label>

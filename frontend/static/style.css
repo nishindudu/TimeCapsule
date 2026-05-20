@@ -202,3 +202,15 @@ form {
     filter: invert();
     animation: infinite-loop 2s infinite linear;
 }
+
+
+#write-stats {
+    margin-left: 60%;
+    margin-top: -17px;
+    font-size: small;
+}
+
+#text_content::selection {
+    background-color: #3b3b3b;
+    color: #f0ffc3;
+}

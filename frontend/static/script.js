@@ -19,6 +19,15 @@ async function saveIdToLocalStorage(id) {
     }
 }
 
+async function showSizeStats() {
+    const text = document.getElementById('text_content').value;
+    const stats = document.getElementById('write-stats');
+
+    let size = text.length;
+    size = size < 1024 ? `${(size)} bytes` : `${(size / 1024).toFixed(2)} KB`;
+    stats.textContent = `This capsule is ~${size}`;
+}
+
 async function createTimeCapsule() {
     const content = document.getElementById('text_content').value;
     const openDate = document.getElementById('open_date').value;
