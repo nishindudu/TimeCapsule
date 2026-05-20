@@ -55,3 +55,12 @@ A website for creating and viewing time capsules with messages to be opened at a
 
 
 7. Open your web browser and navigate to `http://localhost:5000` to access the TimeCapsule web application.
+
+
+## Live Demo
+
+Visit [`https://timecapsule-vxdi.onrender.com/`](https://timecapsule-vxdi.onrender.com/) to see the live demo.
+
+## AI Usage
+
+AI was used to suggest features and improvements.
