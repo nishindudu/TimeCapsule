@@ -186,3 +186,11 @@ document.addEventListener('keydown', (event) => {
         position = 0;
     }
 })
+
+window.addEventListener('beforeunload', (event) => {
+    const textarea = document.getElementById('text_content');
+    if (textarea && textarea.value.trim() !== '') {
+        event.preventDefault();
+        event.returnValue = '';
+    }
+});
