@@ -214,3 +214,17 @@ form {
     background-color: #3b3b3b;
     color: #f0ffc3;
 }
+
+@keyframes rotate360 {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.easter-egg {
+    overflow: hidden;
+    animation: rotate360 2s ease-in-out;
+}

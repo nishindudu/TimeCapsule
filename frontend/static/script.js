@@ -160,3 +160,29 @@ async function saveCapsule() {
 
     showToast('Saved Time Capsule content as time_capsule.txt');
 }
+
+
+let sequence = [
+    't', 'i', 'm', 'e', 'c', 'a', 'p', 's', 'u', 'l', 'e'
+]
+
+let position = 0;
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === sequence[position]) {
+        position++;
+
+        if (position === sequence.length) {
+            position = 0;
+            const body = document.body;
+            body.classList.add('easter-egg');
+
+            setTimeout(() => {
+                body.classList.remove('easter-egg');
+            }, 2000);
+        }
+    }
+    else {
+        position = 0;
+    }
+})
