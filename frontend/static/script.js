@@ -63,6 +63,11 @@ async function createTimeCapsule() {
 
 async function viewTimeCapsule() {
     const id = document.getElementById('time_capsule_id_input').value;
+
+    if (id == "") {
+        showToast("Please Enter TimeCapsule ID!");
+        return;
+    }
     const password = document.getElementById('password').value || null;
     const loader = document.getElementById('loading');
     loader.classList.remove('hide');
@@ -196,6 +201,9 @@ window.addEventListener('beforeunload', (event) => {
 });
 
 window.addEventListener('DOMContentLoaded', async () => {
+    if (window.location.pathname != "/") {
+        return;
+    }
     const currentCountEl = document.getElementById('active-capsules-count');
     const stats = await fetch('/stats');
     const data = await stats.json();

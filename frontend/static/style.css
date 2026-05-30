@@ -1,8 +1,19 @@
+@media (max-width: 600px) {
+    #my-capsules {
+        top: 50% !important;
+    }
+
+    button:active {
+        transform: scale(90%);
+    }
+}
+
 body {
     font-family: Arial, Helvetica, sans-serif;
     color: #eeeeee;
     background-color: black;
     margin: 0;
+    overflow-x: hidden;
 }
 
 nav {
@@ -13,6 +24,8 @@ nav {
     text-align: center;
     background-color: #333;
     padding: 10px 20px;
+    width: 100vw;
+    overflow: hidden;
 }
 
 nav h1 {
