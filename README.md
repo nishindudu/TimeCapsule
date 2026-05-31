@@ -1,66 +1,27 @@
-# TimeCapsule Web
-A website for creating and viewing time capsules with messages to be opened at a specified date.
+# TimeCapsule
 
-## Features
-- Create time capsules with a message and a future open date.
-- View time capsules by entering their unique ID.
+A website for creating time capsules.
 
-## Technologies Used
-- Python
-- Flask
-- HTML/CSS/JS
+## Setup
 
-## Setup Instructions
-1. Clone this repository.
-    ```
-    git clone https://github.com/nishindudu/TimeCapsule.git
+1. Clone the repo
+
+2. Install dependencies
+    ```bash
+    py -m pip install -r requirements.txt
     ```
 
-2. Navigate to the project directory and create a virtual environment.
+3. Set ```DATABASE_URL``` and ```TOKEN``` environment variables.
+
+3. Run the app
+    ```bash
+    waitress-serve --host=0.0.0.0 --port=80 main:app
     ```
-    cd TimeCapsule
-    python -m venv .venv
-    ```
-
-3. Activate the virtual environment.
-    - On Windows:
-        ```
-        .venv\Scripts\activate
-        ```
-    - On macOS/Linux:
-        ```
-        source .venv/bin/activate
-        ```
-
-4. Install the required dependencies.
-    ```
-    pip install -r requirements.txt
-    ```
-
-5. Set environment variables for the database.<br>
-    DATABASE_URL<br>
-    TOKEN
-    
-
-6. Run the application.
-    ```
-    py main.py
-    ```
-
-    or 
-
-    ```
-    waitress-serve --listen=*:5000 main:app
-    ```
-
-
-7. Open your web browser and navigate to `http://localhost:5000` to access the TimeCapsule web application.
-
 
 ## Live Demo
 
-Visit [`https://timecapsule-vxdi.onrender.com/`](https://timecapsule-vxdi.onrender.com/) to see the live demo.
+A live demo if this app is available at [https://timecapsule-vxdi.onrender.com/](https://timecapsule-vxdi.onrender.com/).
 
 ## AI Usage
 
-AI was used to suggest features and improvements.
+AI was used to suggest features for the app.
