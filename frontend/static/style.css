@@ -18,14 +18,20 @@ body {
 
 nav {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
     text-align: center;
     background-color: #333;
     padding: 10px 20px;
-    width: 100vw;
+    width: calc(100vw - 40px);
     overflow: hidden;
+}
+
+nav a {
+    color: white;
+    position: absolute;
+    left: 50px;
 }
 
 nav h1 {
