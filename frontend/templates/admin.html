@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Scoreboard Admin</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    {% if is_admin %}
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    {% endif %}
 </head>
 <body>
     <div class="page">
@@ -15,7 +17,22 @@
             <a class="admin-link" href="{{ url_for('scoreboard') }}">Back to Scoreboard</a>
         </header>
 
+        {% if not is_admin %}
         <section class="score-card">
+            <form method="post" action="{{ url_for('admin_login') }}">
+                <label for="password">Admin Password</label>
+                <input id="password" type="password" name="password" required>
+                <button class="save-btn" type="submit">Login</button>
+                {% if login_error %}
+                <p class="toast error">{{ login_error }}</p>
+                {% endif %}
+            </form>
+        </section>
+        {% else %}
+        <section class="score-card">
+            <form method="post" action="{{ url_for('admin_logout') }}">
+                <button class="save-btn" type="submit">Logout</button>
+            </form>
             <p id="toast" class="toast hidden"></p>
             <table id="admin-table">
                 <thead>
@@ -42,6 +59,7 @@
                 </tbody>
             </table>
         </section>
+        {% endif %}
     </div>
 </body>
 </html>

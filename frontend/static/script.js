@@ -32,6 +32,10 @@ async function saveScore(row) {
     const data = await response.json();
 
     if (!response.ok) {
+        if (response.status === 401) {
+            window.location.href = "/admin";
+            return;
+        }
         showToast(data.message || "Update failed.", true);
         return;
     }

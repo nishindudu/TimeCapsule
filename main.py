@@ -3,15 +3,17 @@ import os
 import sqlite3
 
 import libsql
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 
 app = Flask(__name__, template_folder="frontend/templates", static_folder="frontend/static")
+app.secret_key = "timecapsule-secret-key"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 TOKEN = os.getenv("TOKEN")
 LOCAL_DB_PATH = os.getenv(
     "LOCAL_DB_PATH", os.path.join(app.root_path, "scores.db")
 )
+ADMIN_PASSWORD = "timecapsule-admin"
 
 
 def get_connection():
@@ -85,7 +87,32 @@ def scoreboard():
 
 @app.route("/admin")
 def admin_panel():
-    return render_template("admin.html", scores=fetch_scores())
+    return render_template(
+        "admin.html",
+        scores=fetch_scores() if session.get("is_admin") else [],
+        is_admin=session.get("is_admin", False),
+    )
+
+
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    password = request.form.get("password", "")
+    if password == ADMIN_PASSWORD:
+        session["is_admin"] = True
+        return render_template("admin.html", scores=fetch_scores(), is_admin=True)
+
+    return render_template(
+        "admin.html",
+        scores=[],
+        is_admin=False,
+        login_error="Invalid admin password.",
+    )
+
+
+@app.route("/admin/logout", methods=["POST"])
+def admin_logout():
+    session.pop("is_admin", None)
+    return render_template("admin.html", scores=[], is_admin=False)
 
 
 @app.route("/api/scores", methods=["GET"])
@@ -95,6 +122,9 @@ def get_scores():
 
 @app.route("/api/scores/<int:score_id>", methods=["PUT"])
 def update_score(score_id):
+    if not session.get("is_admin"):
+        return jsonify({"message": "Admin authentication required."}), 401
+
     payload = request.get_json(silent=True) or {}
     program_name = str(payload.get("program_name", "")).strip()
     score = payload.get("score")

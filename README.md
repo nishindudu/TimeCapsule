@@ -2,6 +2,11 @@
 
 A Flask app that shows freshers competition scores and provides an admin panel to edit programme names and scores.
 
+## Admin panel password
+
+- Admin URL: `/admin`
+- Hardcoded password: `timecapsule-admin`
+
 ## Programmes included by default
 
 - CSE
