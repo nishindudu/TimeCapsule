@@ -1,178 +1,141 @@
-import os
-import libsql
-import uuid
 import datetime
-import hashlib
-import base64
-from cryptography.fernet import Fernet
-from flask import Flask, render_template, request, jsonify, redirect, url_for, abort
+import os
+import sqlite3
 
-app = Flask(__name__, template_folder='frontend/templates', static_folder='frontend/static')
+import libsql
+from flask import Flask, jsonify, render_template, request
 
+app = Flask(__name__, template_folder="frontend/templates", static_folder="frontend/static")
 
-database_url = os.getenv('DATABASE_URL')
-token = os.getenv('TOKEN')
-
-start_time = datetime.datetime.now()
-
-global_stats = {
-    'request_count': {
-        'browser': 0,
-        'curl': 0
-    },
-    '404_count': 0
-}
-
-class TimeCapsule:
-    def __init__(self, content, open_date, max_opens, encrypted=False):
-        self.content = content
-        self.open_date = open_date
-        self.max_opens = max_opens
-        self.encrypted = 0 if not encrypted else 1
-        self.create_date = None # Will be set
-        self.id = None # Will be updated when saved to database
-        self.conn = libsql.connect(database=database_url, auth_token=token)
-
-    def save(self):
-        try:
-            id = uuid.uuid4().hex
-            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            self.conn.execute("INSERT INTO Capsules (id, content, open_date, max_opens, create_date, encrypted) VALUES (?, ?, ?, ?, ?, ?)", (str(id), str(self.content), str(self.open_date), int(self.max_opens), str(now), int(self.encrypted)))
-            self.conn.commit()
-            self.id = id
-            return True
-        except Exception as e:
-            print(f"Error occurred while saving time capsule: {e}")
-            return False
-        
-    def get_by_id(self, id):
-        try:
-            result = self.conn.execute("SELECT content, open_date, create_date, max_opens, opened, encrypted FROM Capsules where id = ?", (str(id),)).fetchone()
-            if result:
-                self.content, self.open_date, self.create_date, self.max_opens, self.opened, self.encrypted = result
-                self.id = id
-                if not datetime.datetime.now() < datetime.datetime.strptime(self.open_date, '%Y-%m-%d'):
-                    self.conn.execute("UPDATE Capsules SET opened = opened + 1 WHERE id = ?", (str(id),))
-                    self.conn.commit()
-                if self.max_opens > 0 and self.opened >= self.max_opens:
-                    self.conn.execute("DELETE FROM Capsules WHERE id = ?", (str(id),))
-                    self.conn.commit()
-                    return False
-                return True
-        except Exception as e:
-            print(f"Error occurred while fetching time capsule: {e}")
-            return False
-
-    def get_number_of_capsules(self):
-        try:
-            result =self.conn.execute("SELECT COUNT(*) FROM Capsules")
-            return result.fetchone()[0]
-        except Exception as e:
-            print(f"Error occurred while counting time capsules: {e}")
-            return 0
-        
-    def encrypt_content(self, password):
-        key = base64.urlsafe_b64encode(hashlib.sha256(password.encode()).digest())
-        cipher = Fernet(key)
-        encrypted = cipher.encrypt(self.content.encode())
-        self.content = encrypted.decode()
-        self.encrypted = 1
-        return encrypted.decode()
-    
-    def decrypt_content(self, password):
-        key = base64.urlsafe_b64encode(hashlib.sha256(password.encode()).digest())
-        cipher = Fernet(key)
-        decrypted = cipher.decrypt(self.content.encode())
-        self.content = decrypted.decode()
-        return decrypted.decode()
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/create', methods=['GET', 'POST'])
-def create():
-    if request.method == 'POST':
-        content = request.json.get('content')
-        open_date = request.json.get('open_date')
-        max_opens = request.json.get('max_opens', 0)
-        password = request.json.get('password', None)
-
-        # print(f"Received content: {content}, open_date: {open_date}")
-        # print(f"content: {content}, open: {open_date}")
+DATABASE_URL = os.getenv("DATABASE_URL")
+TOKEN = os.getenv("TOKEN")
+LOCAL_DB_PATH = os.getenv(
+    "LOCAL_DB_PATH", os.path.join(app.root_path, "scores.db")
+)
 
 
-        if not content or not open_date:
-            print("Missing content or open date!")
-            return jsonify({'message': 'Content and open date are required!'}), 400
-
-        capsule = TimeCapsule(content, open_date, max_opens)
-        if password:
-            capsule.encrypt_content(password)
-
-        if not capsule.save():
-            return jsonify({'message': 'Failed to create time capsule!'}), 500
-        capsule_id = capsule.id
-        return jsonify({'message': 'Time capsule created successfully!', 'id': capsule_id}), 201
-    
-    else:
-        return render_template('create.html')
-    
-@app.route('/view', methods=['GET', 'POST'])
-def view():
-    return render_template('view.html')
-
-@app.route('/view/<capsule_id>', methods=['POST'])
-def view_capsule(capsule_id):
-    capsule = TimeCapsule(None, None, None)
-
-    if not capsule.get_by_id(capsule_id):
-        return jsonify({'message': 'Time capsule not found!'}), 404
-    
-    current_date = datetime.datetime.now()
-    open_date = datetime.datetime.strptime(capsule.open_date, '%Y-%m-%d')
-    if current_date < open_date:
-        return jsonify({'message': 'Time capsule is not open yet!', 'open_date': capsule.open_date}), 403
-    
-    if capsule.encrypted:
-        password = request.json.get('password', None)
-        if not password:
-            return jsonify({'message': 'This time capsule is password protected!'}), 403
-        
-        try:
-            capsule.decrypt_content(password)
-        except Exception as e:
-            print(f"Error occurred while decrypting content: {e}")
-            return jsonify({'message': 'Incorrect password!'}), 403
-        
-    return jsonify({'content': str(capsule.content)}), 200
-
-@app.route('/stats')
-def stats():
-    capsule = TimeCapsule(None, None, None)
-
-    count = capsule.get_number_of_capsules()
-    uptime = datetime.datetime.now() - start_time
-    session_requests = global_stats['request_count']['browser'] + global_stats['request_count']['curl']
-    count_404 = global_stats['404_count']
-
-    return jsonify({'current_count': count, 'uptime': str(uptime), 'session_requests': session_requests, '404_count_session': count_404}), 200
+def get_connection():
+    if DATABASE_URL:
+        return libsql.connect(database=DATABASE_URL, auth_token=TOKEN)
+    return sqlite3.connect(LOCAL_DB_PATH)
 
 
-@app.errorhandler(404)
-def page_not_found(e):
-    global_stats['404_count'] += 1
-    return render_template('404.html'), 404
+def initialize_database():
+    with get_connection() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS scores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                program_name TEXT NOT NULL UNIQUE,
+                score INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
 
-@app.before_request
-def count_requests():
-    user_agent = request.headers.get('User-Agent', '').lower()
-    if 'curl' in user_agent:
-        global_stats['request_count']['curl'] += 1
-    else:
-        global_stats['request_count']['browser'] += 1
+        now = datetime.datetime.utcnow().isoformat(timespec="seconds")
+        default_programs = [
+            ("CSE", 0, now),
+            ("IT", 0, now),
+            ("MECH", 0, now),
+            ("ECE & RAI", 0, now),
+            ("EEE", 0, now),
+        ]
+        conn.executemany(
+            "INSERT OR IGNORE INTO scores (program_name, score, updated_at) VALUES (?, ?, ?)",
+            default_programs,
+        )
+        conn.commit()
 
 
-if __name__ == '__main__':
+def fetch_scores():
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, program_name, score, updated_at
+            FROM scores
+            ORDER BY CASE program_name
+                WHEN 'CSE' THEN 1
+                WHEN 'IT' THEN 2
+                WHEN 'MECH' THEN 3
+                WHEN 'ECE & RAI' THEN 4
+                WHEN 'EEE' THEN 5
+                ELSE 6
+            END, program_name
+            """
+        ).fetchall()
+
+    scores = []
+    for row in rows:
+        scores.append(
+            {
+                "id": row[0],
+                "program_name": row[1],
+                "score": row[2],
+                "updated_at": row[3],
+            }
+        )
+    return scores
+
+
+@app.route("/")
+def scoreboard():
+    return render_template("index.html", scores=fetch_scores())
+
+
+@app.route("/admin")
+def admin_panel():
+    return render_template("admin.html", scores=fetch_scores())
+
+
+@app.route("/api/scores", methods=["GET"])
+def get_scores():
+    return jsonify({"scores": fetch_scores()})
+
+
+@app.route("/api/scores/<int:score_id>", methods=["PUT"])
+def update_score(score_id):
+    payload = request.get_json(silent=True) or {}
+    program_name = str(payload.get("program_name", "")).strip()
+    score = payload.get("score")
+
+    if not program_name:
+        return jsonify({"message": "Programme name is required."}), 400
+
+    try:
+        score = int(score)
+    except (TypeError, ValueError):
+        return jsonify({"message": "Score must be a valid number."}), 400
+
+    if score < 0:
+        return jsonify({"message": "Score cannot be negative."}), 400
+
+    updated_at = datetime.datetime.utcnow().isoformat(timespec="seconds")
+
+    try:
+        with get_connection() as conn:
+            result = conn.execute(
+                """
+                UPDATE scores
+                SET program_name = ?, score = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (program_name, score, updated_at, score_id),
+            )
+            conn.commit()
+            if result.rowcount == 0:
+                return jsonify({"message": "Score entry not found."}), 404
+    except Exception as exc:
+        error_text = str(exc).lower()
+        if "unique" in error_text:
+            return jsonify({"message": "Programme name already exists."}), 409
+        return jsonify({"message": "Failed to update score entry."}), 500
+
+    return jsonify({"message": "Score updated successfully."})
+
+
+initialize_database()
+
+
+if __name__ == "__main__":
     app.run(debug=True)
-

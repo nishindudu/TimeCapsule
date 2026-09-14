@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scoreboard Admin</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <div class="page">
+        <header class="hero">
+            <h1>Admin Panel</h1>
+            <p>Edit programme names and scores for the freshers competition.</p>
+            <a class="admin-link" href="{{ url_for('scoreboard') }}">Back to Scoreboard</a>
+        </header>
+
+        <section class="score-card">
+            <p id="toast" class="toast hidden"></p>
+            <table id="admin-table">
+                <thead>
+                    <tr>
+                        <th>Programme Name</th>
+                        <th>Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in scores %}
+                    <tr data-id="{{ score.id }}">
+                        <td>
+                            <input type="text" class="programme" value="{{ score.program_name }}" maxlength="60">
+                        </td>
+                        <td>
+                            <input type="number" class="score" value="{{ score.score }}" min="0">
+                        </td>
+                        <td>
+                            <button class="save-btn" type="button">Save</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</body>
+</html>

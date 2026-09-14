@@ -1,25 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Time Capsule</title>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-        <script src="{{ url_for('static', filename='script.js') }}"></script>
-    </head>
-    <body>
-        <nav>
-            <h1>TimeCapsule</h1>
-        </nav>
-        <div class="container">
-            <div id="content">
-                <button onclick="window.location.href='/create'">Create a Time Capsule</button>
-                <button onclick="window.location.href='/view'">View Time Capsules</button>
-            </div>
-        </div>
-        <div id="foot">
-            <span>Active Capsules: <span id="active-capsules-count">loading...</span></span>
-            <span onclick="window.open('https://github.com/nishindudu/TimeCapsule', '_blank')"><img src="{{ url_for('static', filename='img/GitHub_Invertocat_White.svg') }}" alt="Github"></span>
-        </div>
-    </body>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Freshers Competition Scores</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page">
+        <header class="hero">
+            <h1>Freshers Competition Scoreboard</h1>
+            <p>Live score updates for all participating programmes.</p>
+            <a class="admin-link" href="{{ url_for('admin_panel') }}">Go to Admin Panel</a>
+        </header>
+
+        <section class="score-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Programme</th>
+                        <th>Score</th>
+                        <th>Last Updated (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in scores %}
+                    <tr>
+                        <td>{{ score.program_name }}</td>
+                        <td>{{ score.score }}</td>
+                        <td>{{ score.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</body>
 </html>
